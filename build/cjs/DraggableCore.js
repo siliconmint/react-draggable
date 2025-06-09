@@ -80,6 +80,7 @@ class DraggableCore extends React.Component /*:: <DraggableCoreProps>*/{
     _defineProperty(this, "touchIdentifier", null);
     _defineProperty(this, "mounted", false);
     _defineProperty(this, "attached", false);
+    _defineProperty(this, "ref", null);
     _defineProperty(this, "handleDragStart", e => {
       // Make it possible to attach event handlers on top of this one.
       this.props.onMouseDown(e);
@@ -301,13 +302,19 @@ class DraggableCore extends React.Component /*:: <DraggableCoreProps>*/{
   // React Strict Mode compatibility: if `nodeRef` is passed, we will use it instead of trying to find
   // the underlying DOM node ourselves. See the README for more information.
   findDOMNode() /*: ?HTMLElement*/{
-    var _this$props, _this$props2;
-    return (_this$props = this.props) !== null && _this$props !== void 0 && _this$props.nodeRef ? (_this$props2 = this.props) === null || _this$props2 === void 0 || (_this$props2 = _this$props2.nodeRef) === null || _this$props2 === void 0 ? void 0 : _this$props2.current : undefined;
+    var _this$props;
+    if ((_this$props = this.props) !== null && _this$props !== void 0 && _this$props.nodeRef) {
+      var _this$props2;
+      return (_this$props2 = this.props) === null || _this$props2 === void 0 || (_this$props2 = _this$props2.nodeRef) === null || _this$props2 === void 0 ? void 0 : _this$props2.current;
+    }
+    return this.ref;
   }
   render() /*: React.Element<any>*/{
+    const child = React.Children.only(this.props.children);
+
     // Reuse the child provided
     // This makes it flexible to use whatever element is wanted (div, ul, etc)
-    return /*#__PURE__*/React.cloneElement(React.Children.only(this.props.children), {
+    return /*#__PURE__*/React.cloneElement(child, {
       // Note: mouseMove handler is attached to document so it will still function
       // when the user drags quickly and leaves the bounds of the element.
       onMouseDown: this.onMouseDown,
@@ -315,7 +322,15 @@ class DraggableCore extends React.Component /*:: <DraggableCoreProps>*/{
       // onTouchStart is added on `componentDidMount` so they can be added with
       // {passive: false}, which allows it to cancel. See
       // https://developers.google.com/web/updates/2017/01/scrolling-intervention
-      onTouchEnd: this.onTouchEnd
+      onTouchEnd: this.onTouchEnd,
+      ref: ref => {
+        this.ref = ref;
+        if (typeof child.ref == 'function') {
+          child.ref(ref);
+        } else if (child.ref) {
+          child.ref.current = ref;
+        }
+      }
     });
   }
 }
